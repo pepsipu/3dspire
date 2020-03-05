@@ -1,39 +1,72 @@
-fieldOfView = 90
-aspectRatio = platform.window:width()/platform.window:height()
-sideScalar = 1/math.atan(fieldOfView/0)
 
-Vec3 = {x = 0, y = 0, z = 0}
-function Vec3:new(vector3)
-    vector3.parent = self
-    return vector3
+
+config = {
+    fieldOfView = 90,
+    aspectRatio = platform.window:width() / platform.window:height()
+}
+
+matrices = {}
+matrices.projection = {
+    { config.aspectRatio * (1 / math.atan(config.fieldOfView / 2)), 0, 0 },
+    { 0, 1 / math.atan(config.fieldOfView / 2), 0 },
+    { 0, 0, 0 },
+}
+matrices.cross = function(a, b, size)
+    result = {}
+    for i = 1, table.getn(a), 1 do
+        accumulator = 0
+        for k = 1, table.getn(b), 1 do
+            accumulator = accumulator + a[i] * b[k][i]
+        end
+        result[i] = accumulator
+    end
+    return result
 end
 
-Vec2 = {x = 0, y = 0}
-function Vec2:new(vector2)
-    vector2.parent = self
-    return vector2
-end
+meshes = {}
+meshes.cube = {
+    { 0, 0, 0, 0, 1, 0, 1, 1, 0 },
+    { 0, 0, 0, 1, 1, 0, 1, 0, 0 },
 
-mapping = {}
---- maps 3d points onto 2d plane
-mapping.projection = function(x, y, z)
-    return Vec2{x = (aspectRatio * sideScalar * x) / z, y = (aspectRatio * y) / z}
-end
+    { 1, 0, 0, 1, 1, 0, 1, 1, 1 },
+    { 1, 0, 0, 1, 1, 1, 1, 0, 1 },
 
-mapping.drawTriangle = function(triangle, gc)
-    gc:drawLine(triangle[1].x, triangle[1].y, triangle[2].x, triangle[2].y)
-    gc:drawLine(triangle[2].x, triangle[2].y, triangle[3].x, triangle[3].y)
-    gc:drawLine(triangle[3].x, triangle[3].y, triangle[1].x, triangle[1].y)
-end
+    { 1, 0, 1, 1, 1, 1, 0, 1, 1 },
+    { 1, 0, 1, 0, 1, 1, 0, 0, 1 },
+
+    { 0, 0, 1, 0, 1, 1, 0, 1, 0 },
+    { 0, 0, 1, 0, 1, 0, 0, 0, 0 },
+
+    { 0, 1, 0, 0, 1, 1, 1, 1, 1 },
+    { 0, 1, 0, 1, 1, 1, 1, 1, 0 },
+
+    { 1, 0, 1, 0, 0, 1, 0, 0, 0 },
+    { 1, 0, 1, 0, 0, 0, 1, 0, 0 },
+}
 
 function on.paint(gc)
-    gc:drawString("test", 10, 10)
-    mapping.drawTriangle({
-        {x = 0, y = 0},
-        {x = 10, y = 2},
-        {x = 17, y = 19},
-    }, gc)
+    for i, v in ipairs(meshes.cube) do
+    end
+end
+function on.activate()
+    print(dump(matrices.cross({ 6, 2, 1 }, {
+        { 1, 0, 0 },
+        { 1, 6, 2 },
+        { 0, 2, 0 }
+    })))
 end
 
-function on.activate()
+function dump(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k, v in pairs(o) do
+            if type(k) ~= 'number' then
+                k = '"' .. k .. '"'
+            end
+            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
 end
